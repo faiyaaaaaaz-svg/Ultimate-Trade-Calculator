@@ -1453,6 +1453,29 @@ function setAgentStatus(message) {
   if (agentConnectionStatus) agentConnectionStatus.textContent = message;
 }
 
+function cleanAgentPlainText(text) {
+  return String(text || "")
+    .replace(/```[\s\S]*?```/g, (match) => match.replace(/```/g, ""))
+    .replace(/^\s{0,3}#{1,6}\s*/gm, "")
+    .replace(/\*\*(.*?)\*\*/g, "$1")
+    .replace(/__(.*?)__/g, "$1")
+    .replace(/\*(.*?)\*/g, "$1")
+    .replace(/_(.*?)_/g, "$1")
+    .replace(/^\s*[-*+]\s+/gm, "")
+    .replace(/^\s*>+\s?/gm, "")
+    .replace(/\\\[/g, "")
+    .replace(/\\\]/g, "")
+    .replace(/\\\(/g, "")
+    .replace(/\\\)/g, "")
+    .replace(/\\text\{([^}]*)\}/g, "$1")
+    .replace(/\\times/g, "x")
+    .replace(/\\approx/g, "approximately")
+    .replace(/\\frac\{([^}]*)\}\{([^}]*)\}/g, "($1 / $2)")
+    .replace(/\\[a-zA-Z]+/g, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 function appendAgentMessage(role, text) {
   const message = document.createElement("div");
   message.className = `agent-message ${role === "user" ? "agent-message-user" : "agent-message-ai"}`;
@@ -1461,7 +1484,7 @@ function appendAgentMessage(role, text) {
   label.textContent = role === "user" ? "You" : "AI Agent";
 
   const body = document.createElement("p");
-  body.textContent = text;
+  body.textContent = cleanAgentPlainText(text);
 
   message.appendChild(label);
   message.appendChild(body);
@@ -1510,7 +1533,7 @@ async function handleAgentSubmit(event) {
       throw new Error(payload.error || "The AI agent could not answer right now.");
     }
 
-    const answer = payload.answer || "I could not generate an answer. Please try again.";
+    const answer = cleanAgentPlainText(payload.answer || "I could not generate an answer. Please try again.");
     appendAgentMessage("assistant", answer);
     agentHistory.push({ role: "assistant", content: answer });
     setAgentStatus("Answer generated.");
