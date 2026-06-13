@@ -298,12 +298,14 @@ const marginSection = document.getElementById("marginSection");
 const pnlSection = document.getElementById("pnlSection");
 const maxlotSection = document.getElementById("maxlotSection");
 const riskSection = document.getElementById("riskSection");
+const agentSection = document.getElementById("agentSection");
 
 const sectionMap = {
   margin: marginSection,
   pnl: pnlSection,
   maxlot: maxlotSection,
-  risk: riskSection
+  risk: riskSection,
+  agent: agentSection
 };
 
 function showSection(tabName, scrollToSection = false) {
@@ -1355,6 +1357,128 @@ function onRiskPercentMarketChange() {
 }
 
 /* -----------------------------------
+   AI SUPPORT AGENT
+----------------------------------- */
+const agentModel = document.getElementById("agentModel");
+const agentMessages = document.getElementById("agentMessages");
+const agentForm = document.getElementById("agentForm");
+const agentQuestion = document.getElementById("agentQuestion");
+const sendAgentQuestion = document.getElementById("sendAgentQuestion");
+const clearAgentChat = document.getElementById("clearAgentChat");
+const agentConnectionStatus = document.getElementById("agentConnectionStatus");
+
+let agentHistory = [];
+
+function getCalculatorDataSummary() {
+  return {
+    updatedAt: DATA.updatedAt || "",
+    markets: Array.from(new Set(DATA.instruments.map((item) => item.marketType))).filter(Boolean),
+    instruments: DATA.instruments.map((item) => ({
+      instrumentName: item.instrumentName,
+      marketType: item.marketType,
+      contractSize: item.contractSize,
+      pipSize: item.pipSize,
+      faqPipValue: item.faqPipValue,
+      active: item.active,
+      sortOrder: item.sortOrder
+    })),
+    models: DATA.models.map((item) => ({
+      modelName: item.modelName,
+      marketType: item.marketType,
+      defaultLeverage: item.defaultLeverage,
+      active: item.active
+    })),
+    conversionPrices: DATA.conversionPrices.map((item) => ({
+      instrumentName: item.instrumentName,
+      marketType: item.marketType,
+      conversionPair: item.conversionPair,
+      formulaPattern: item.formulaPattern,
+      finalConversionFactor: item.finalConversionFactor
+    }))
+  };
+}
+
+function setAgentStatus(message) {
+  if (agentConnectionStatus) agentConnectionStatus.textContent = message;
+}
+
+function appendAgentMessage(role, text) {
+  const message = document.createElement("div");
+  message.className = `agent-message ${role === "user" ? "agent-message-user" : "agent-message-ai"}`;
+
+  const label = document.createElement("strong");
+  label.textContent = role === "user" ? "You" : "AI Agent";
+
+  const body = document.createElement("p");
+  body.textContent = text;
+
+  message.appendChild(label);
+  message.appendChild(body);
+  agentMessages.appendChild(message);
+  agentMessages.scrollTop = agentMessages.scrollHeight;
+}
+
+function setAgentLoading(isLoading) {
+  sendAgentQuestion.disabled = isLoading;
+  agentQuestion.disabled = isLoading;
+  sendAgentQuestion.textContent = isLoading ? "Thinking..." : "Ask AI";
+}
+
+async function handleAgentSubmit(event) {
+  event.preventDefault();
+
+  const question = agentQuestion.value.trim();
+  if (!question) {
+    setAgentStatus("Type a question first.");
+    return;
+  }
+
+  appendAgentMessage("user", question);
+  agentHistory.push({ role: "user", content: question });
+  agentQuestion.value = "";
+  setAgentLoading(true);
+  setAgentStatus("AI agent is thinking...");
+
+  try {
+    const response = await fetch("/api/ai-agent", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: agentModel.value,
+        message: question,
+        history: agentHistory.slice(-10),
+        calculatorData: getCalculatorDataSummary()
+      })
+    });
+
+    const payload = await response.json();
+
+    if (!response.ok) {
+      throw new Error(payload.error || "The AI agent could not answer right now.");
+    }
+
+    const answer = payload.answer || "I could not generate an answer. Please try again.";
+    appendAgentMessage("assistant", answer);
+    agentHistory.push({ role: "assistant", content: answer });
+    setAgentStatus("Answer generated.");
+  } catch (error) {
+    appendAgentMessage("assistant", error.message || "Something went wrong while contacting the AI agent.");
+    setAgentStatus("AI request failed.");
+  } finally {
+    setAgentLoading(false);
+  }
+}
+
+function clearAgentConversation() {
+  agentHistory = [];
+  agentMessages.innerHTML = "";
+  appendAgentMessage("assistant", "Ask me about margin, PnL, max lot, stop loss, take profit, risk percentage, or how to use this calculator. If your question is missing key information, I will ask for it first.");
+  setAgentStatus("Chat cleared.");
+}
+
+/* -----------------------------------
    COPY BUTTONS
 ----------------------------------- */
 setupCopyButton(copyMarginMacroBtn, marginMacroText, "Copy Macro");
@@ -1433,6 +1557,9 @@ function initializeApp() {
   riskPercentRiskPercent.addEventListener("input", calculateRiskPercent);
   riskPercentRewardPercent.addEventListener("input", calculateRiskPercent);
   riskPercentSlPips.addEventListener("input", calculateRiskPercent);
+
+  agentForm.addEventListener("submit", handleAgentSubmit);
+  clearAgentChat.addEventListener("click", clearAgentConversation);
 }
 
 initializeApp();
