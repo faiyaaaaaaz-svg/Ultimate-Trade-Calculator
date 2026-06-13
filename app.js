@@ -48,6 +48,7 @@ function setOptions(selectElement, placeholderText, values) {
 
 function initializeSearchableSelects() {
   document.querySelectorAll("select").forEach((selectElement) => {
+    if (selectElement.dataset.nativeSelect === "true") return;
     if (selectElement.dataset.searchableReady === "true") return;
 
     selectElement.dataset.searchableReady = "true";
@@ -1365,9 +1366,59 @@ const agentForm = document.getElementById("agentForm");
 const agentQuestion = document.getElementById("agentQuestion");
 const sendAgentQuestion = document.getElementById("sendAgentQuestion");
 const clearAgentChat = document.getElementById("clearAgentChat");
+const exportAgentText = document.getElementById("exportAgentText");
+const exportAgentPdf = document.getElementById("exportAgentPdf");
 const agentConnectionStatus = document.getElementById("agentConnectionStatus");
 
 let agentHistory = [];
+
+const FALLBACK_AI_MODELS = [
+  { id: "gpt-5.4-mini", label: "GPT-5.4 Mini - cheaper, fast" },
+  { id: "gpt-5.4-nano", label: "GPT-5.4 Nano - cheapest, fastest" },
+  { id: "gpt-4.1-mini", label: "GPT-4.1 Mini - affordable classic" },
+  { id: "gpt-4.1-nano", label: "GPT-4.1 Nano - very low cost" },
+  { id: "gpt-4o-mini", label: "GPT-4o Mini - low cost" },
+  { id: "gpt-5.4", label: "GPT-5.4 - balanced" },
+  { id: "gpt-5.5", label: "GPT-5.5 - strongest" },
+  { id: "gpt-4.1", label: "GPT-4.1 - older flagship" },
+  { id: "gpt-4o", label: "GPT-4o - older omni model" }
+];
+
+function renderAgentModels(models, selectedModel) {
+  const safeModels = Array.isArray(models) && models.length ? models : FALLBACK_AI_MODELS;
+  const preferredModel = selectedModel || agentModel.value || "gpt-5.4-mini";
+
+  agentModel.innerHTML = "";
+  safeModels.forEach((model) => {
+    const option = document.createElement("option");
+    option.value = model.id;
+    option.textContent = model.label || model.id;
+    agentModel.appendChild(option);
+  });
+
+  if (safeModels.some((model) => model.id === preferredModel)) {
+    agentModel.value = preferredModel;
+  }
+}
+
+async function loadAgentModels() {
+  renderAgentModels(FALLBACK_AI_MODELS, "gpt-5.4-mini");
+
+  try {
+    const response = await fetch("/api/models");
+    const payload = await response.json();
+
+    if (!response.ok) {
+      setAgentStatus("Using fallback model list. Add OPENAI_API_KEY to load account models.");
+      return;
+    }
+
+    renderAgentModels(payload.models, payload.defaultModel || "gpt-5.4-mini");
+    setAgentStatus("Model list loaded from your OpenAI account.");
+  } catch (error) {
+    setAgentStatus("Using fallback model list.");
+  }
+}
 
 function getCalculatorDataSummary() {
   return {
@@ -1478,6 +1529,130 @@ function clearAgentConversation() {
   setAgentStatus("Chat cleared.");
 }
 
+function getAgentTranscript() {
+  const lines = [
+    "Trading Calculator AI Agent Chat",
+    `Exported: ${new Date().toLocaleString()}`,
+    `Model selected: ${agentModel.value || "Not selected"}`,
+    ""
+  ];
+
+  if (!agentHistory.length) {
+    lines.push("No chat messages yet.");
+  } else {
+    agentHistory.forEach((item) => {
+      const speaker = item.role === "assistant" ? "AI Agent" : "Client";
+      lines.push(`${speaker}:`);
+      lines.push(item.content);
+      lines.push("");
+    });
+  }
+
+  return lines.join("\n");
+}
+
+function downloadBlob(filename, mimeType, content) {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function exportAgentChatText() {
+  downloadBlob("trading-calculator-ai-chat.txt", "text/plain;charset=utf-8", getAgentTranscript());
+  setAgentStatus("Chat exported as text.");
+}
+
+function escapePdfText(text) {
+  return String(text)
+    .replace(/\\/g, "\\\\")
+    .replace(/\(/g, "\\(")
+    .replace(/\)/g, "\\)")
+    .replace(/[^\x09\x0A\x0D\x20-\x7E]/g, "");
+}
+
+function wrapPdfLine(text, maxLength = 88) {
+  const words = String(text).split(/\s+/);
+  const lines = [];
+  let current = "";
+
+  words.forEach((word) => {
+    if ((current + " " + word).trim().length > maxLength) {
+      if (current) lines.push(current);
+      current = word;
+      return;
+    }
+    current = `${current} ${word}`.trim();
+  });
+
+  if (current) lines.push(current);
+  return lines.length ? lines : [""];
+}
+
+function createSimplePdf(text) {
+  const rawLines = text.split("\n");
+  const wrappedLines = rawLines.flatMap((line) => wrapPdfLine(line));
+  const pageLineLimit = 42;
+  const pages = [];
+
+  for (let index = 0; index < wrappedLines.length; index += pageLineLimit) {
+    pages.push(wrappedLines.slice(index, index + pageLineLimit));
+  }
+
+  const objects = [
+    "<< /Type /Catalog /Pages 2 0 R >>",
+    "",
+    "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"
+  ];
+  const pageRefs = [];
+
+  pages.forEach((pageLines, pageIndex) => {
+    const pageObjectNumber = 4 + (pageIndex * 2);
+    const contentObjectNumber = pageObjectNumber + 1;
+    pageRefs.push(`${pageObjectNumber} 0 R`);
+
+    const commands = ["BT", "/F1 10 Tf", "50 790 Td", "14 TL"];
+    pageLines.forEach((line, lineIndex) => {
+      if (lineIndex > 0) commands.push("T*");
+      commands.push(`(${escapePdfText(line)}) Tj`);
+    });
+    commands.push("ET");
+
+    const stream = commands.join("\n");
+    objects.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 842] /Resources << /Font << /F1 3 0 R >> >> /Contents ${contentObjectNumber} 0 R >>`);
+    objects.push(`<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`);
+  });
+
+  objects[1] = `<< /Type /Pages /Kids [${pageRefs.join(" ")}] /Count ${pageRefs.length} >>`;
+
+  let pdf = "%PDF-1.4\n";
+  const offsets = [0];
+  objects.forEach((object, index) => {
+    offsets.push(pdf.length);
+    pdf += `${index + 1} 0 obj\n${object}\nendobj\n`;
+  });
+
+  const xrefOffset = pdf.length;
+  pdf += `xref\n0 ${objects.length + 1}\n`;
+  pdf += "0000000000 65535 f \n";
+  offsets.slice(1).forEach((offset) => {
+    pdf += `${String(offset).padStart(10, "0")} 00000 n \n`;
+  });
+  pdf += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`;
+  return pdf;
+}
+
+function exportAgentChatPdf() {
+  const pdf = createSimplePdf(getAgentTranscript());
+  downloadBlob("trading-calculator-ai-chat.pdf", "application/pdf", pdf);
+  setAgentStatus("Chat exported as PDF.");
+}
+
 /* -----------------------------------
    COPY BUTTONS
 ----------------------------------- */
@@ -1510,6 +1685,7 @@ function initializeApp() {
 
   calculateRiskMoney();
   calculateRiskPercent();
+  loadAgentModels();
 
   market.addEventListener("change", onMarginMarketChange);
   instrument.addEventListener("change", calculateMargin);
@@ -1560,6 +1736,8 @@ function initializeApp() {
 
   agentForm.addEventListener("submit", handleAgentSubmit);
   clearAgentChat.addEventListener("click", clearAgentConversation);
+  exportAgentText.addEventListener("click", exportAgentChatText);
+  exportAgentPdf.addEventListener("click", exportAgentChatPdf);
 }
 
 initializeApp();
