@@ -750,15 +750,33 @@ Please complete the Risk by Percentage inputs to generate the explanation text.
     </div>
 
     <div class="agent-shell">
-      <div class="agent-main">
-        <div class="agent-toolbar">
-          <div>
-            <span class="agent-status-dot"></span>
-            <span id="agentConnectionStatus">Ready to answer calculator questions</span>
-          </div>
-          <button id="clearAgentChat" type="button" class="macro-copy-btn">Clear Chat</button>
+      <div class="agent-topbar">
+        <div class="agent-model-control">
+          <label for="agentModel">AI Model</label>
+          <select id="agentModel" data-native-select="true">
+            <option value="gpt-5.4-mini">GPT-5.4 Mini - cheaper, fast</option>
+            <option value="gpt-5.4-nano">GPT-5.4 Nano - cheapest, fastest</option>
+            <option value="gpt-4.1-mini">GPT-4.1 Mini - affordable classic</option>
+            <option value="gpt-4.1-nano">GPT-4.1 Nano - very low cost</option>
+            <option value="gpt-4o-mini">GPT-4o Mini - low cost</option>
+            <option value="gpt-5.4">GPT-5.4 - balanced</option>
+            <option value="gpt-5.5">GPT-5.5 - strongest</option>
+            <option value="gpt-4.1">GPT-4.1 - older flagship</option>
+            <option value="gpt-4o">GPT-4o - older omni model</option>
+          </select>
         </div>
 
+        <div class="agent-status-card">
+          <span class="agent-status-dot"></span>
+          <span id="agentConnectionStatus">Ready. Cheaper models are selected first by default.</span>
+        </div>
+
+        <button id="clearAgentChat" type="button" class="agent-clear-btn">Clear Chat</button>
+        <button id="exportAgentText" type="button" class="agent-clear-btn">Export Text</button>
+        <button id="exportAgentPdf" type="button" class="agent-clear-btn">Export PDF</button>
+      </div>
+
+      <div class="agent-main">
         <div id="agentMessages" class="agent-messages" aria-live="polite">
           <div class="agent-message agent-message-ai">
             <strong>AI Agent</strong>
@@ -772,25 +790,10 @@ Please complete the Risk by Percentage inputs to generate the explanation text.
         </form>
       </div>
 
-      <aside class="agent-side">
-        <div class="agent-config-panel">
-          <h3>AI Settings</h3>
-          <div class="form-group">
-            <label>AI Model</label>
-            <select id="agentModel">
-              <option value="gpt-5.5">GPT-5.5</option>
-              <option value="gpt-5.4">GPT-5.4</option>
-              <option value="gpt-5.4-mini">GPT-5.4 Mini</option>
-            </select>
-          </div>
-          <p class="agent-small-note">The selected model is sent to the secure backend. The API key must be stored in Vercel, not inside this page.</p>
-        </div>
-
-        <div class="agent-config-panel">
-          <h3>Admin Setup</h3>
-          <p class="agent-small-note">For version 1, add your OpenAI key in Vercel as an environment variable named <strong>OPENAI_API_KEY</strong>. Supabase is not required unless you want a full login-based admin panel later.</p>
-        </div>
-      </aside>
+      <div class="agent-note-row">
+        <span>API key stays private in Vercel as OPENAI_API_KEY.</span>
+        <span>Supabase is only needed later for login, saved chats, or a full admin panel.</span>
+      </div>
     </div>
   </div>
 
