@@ -1373,20 +1373,15 @@ const agentConnectionStatus = document.getElementById("agentConnectionStatus");
 let agentHistory = [];
 
 const FALLBACK_AI_MODELS = [
-  { id: "gpt-5.4-mini", label: "GPT-5.4 Mini - cheaper, fast" },
-  { id: "gpt-5.4-nano", label: "GPT-5.4 Nano - cheapest, fastest" },
-  { id: "gpt-4.1-mini", label: "GPT-4.1 Mini - affordable classic" },
-  { id: "gpt-4.1-nano", label: "GPT-4.1 Nano - very low cost" },
-  { id: "gpt-4o-mini", label: "GPT-4o Mini - low cost" },
-  { id: "gpt-5.4", label: "GPT-5.4 - balanced" },
-  { id: "gpt-5.5", label: "GPT-5.5 - strongest" },
-  { id: "gpt-4.1", label: "GPT-4.1 - older flagship" },
-  { id: "gpt-4o", label: "GPT-4o - older omni model" }
+  { id: "gpt-4", label: "GPT-4.0 - default" },
+  { id: "gpt-4.1", label: "GPT-4.1" },
+  { id: "gpt-4.1-mini", label: "GPT-4.1 Mini" },
+  { id: "gpt-4.1-nano", label: "GPT-4.1 Nano" }
 ];
 
 function renderAgentModels(models, selectedModel) {
   const safeModels = Array.isArray(models) && models.length ? models : FALLBACK_AI_MODELS;
-  const preferredModel = selectedModel || agentModel.value || "gpt-5.4-mini";
+  const preferredModel = selectedModel || agentModel.value || "gpt-4";
 
   agentModel.innerHTML = "";
   safeModels.forEach((model) => {
@@ -1402,21 +1397,21 @@ function renderAgentModels(models, selectedModel) {
 }
 
 async function loadAgentModels() {
-  renderAgentModels(FALLBACK_AI_MODELS, "gpt-5.4-mini");
+  renderAgentModels(FALLBACK_AI_MODELS, "gpt-4");
 
   try {
     const response = await fetch("/api/models");
     const payload = await response.json();
 
     if (!response.ok) {
-      setAgentStatus("Using fallback model list. Add OPENAI_API_KEY to load account models.");
+      setAgentStatus("Using approved GPT-4 model list.");
       return;
     }
 
-    renderAgentModels(payload.models, payload.defaultModel || "gpt-5.4-mini");
-    setAgentStatus("Model list loaded from your OpenAI account.");
+    renderAgentModels(payload.models, payload.defaultModel || "gpt-4");
+    setAgentStatus("Ready. Paste the client query and generate a reply.");
   } catch (error) {
-    setAgentStatus("Using fallback model list.");
+    setAgentStatus("Using approved GPT-4 model list.");
   }
 }
 
@@ -1443,7 +1438,6 @@ function getCalculatorDataSummary() {
       instrumentName: item.instrumentName,
       marketType: item.marketType,
       conversionPair: item.conversionPair,
-      formulaPattern: item.formulaPattern,
       finalConversionFactor: item.finalConversionFactor
     }))
   };
@@ -1481,13 +1475,37 @@ function appendAgentMessage(role, text) {
   message.className = `agent-message ${role === "user" ? "agent-message-user" : "agent-message-ai"}`;
 
   const label = document.createElement("strong");
-  label.textContent = role === "user" ? "You" : "AI Agent";
+  label.textContent = role === "user" ? "Client Query" : "Suggested Reply";
 
   const body = document.createElement("p");
-  body.textContent = cleanAgentPlainText(text);
+  const cleanedText = cleanAgentPlainText(text);
+  body.textContent = cleanedText;
 
   message.appendChild(label);
   message.appendChild(body);
+
+  if (role !== "user") {
+    const copyButton = document.createElement("button");
+    copyButton.type = "button";
+    copyButton.className = "agent-copy-reply";
+    copyButton.textContent = "Copy reply";
+    copyButton.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(cleanedText);
+        copyButton.textContent = "Copied";
+        setTimeout(() => {
+          copyButton.textContent = "Copy reply";
+        }, 1400);
+      } catch (error) {
+        copyButton.textContent = "Copy failed";
+        setTimeout(() => {
+          copyButton.textContent = "Copy reply";
+        }, 1400);
+      }
+    });
+    message.appendChild(copyButton);
+  }
+
   agentMessages.appendChild(message);
   agentMessages.scrollTop = agentMessages.scrollHeight;
 }
@@ -1495,7 +1513,7 @@ function appendAgentMessage(role, text) {
 function setAgentLoading(isLoading) {
   sendAgentQuestion.disabled = isLoading;
   agentQuestion.disabled = isLoading;
-  sendAgentQuestion.textContent = isLoading ? "Thinking..." : "Ask AI";
+  sendAgentQuestion.textContent = isLoading ? "Generating..." : "Generate Reply";
 }
 
 async function handleAgentSubmit(event) {
@@ -1511,7 +1529,7 @@ async function handleAgentSubmit(event) {
   agentHistory.push({ role: "user", content: question });
   agentQuestion.value = "";
   setAgentLoading(true);
-  setAgentStatus("AI agent is thinking...");
+  setAgentStatus("Generating a client-ready reply...");
 
   try {
     const response = await fetch("/api/ai-agent", {
@@ -1530,7 +1548,7 @@ async function handleAgentSubmit(event) {
     const payload = await response.json();
 
     if (!response.ok) {
-      throw new Error(payload.error || "The AI agent could not answer right now.");
+      throw new Error(payload.error || "The reply could not be generated right now.");
     }
 
     const answer = cleanAgentPlainText(payload.answer || "I could not generate an answer. Please try again.");
@@ -1538,7 +1556,7 @@ async function handleAgentSubmit(event) {
     agentHistory.push({ role: "assistant", content: answer });
     setAgentStatus("Answer generated.");
   } catch (error) {
-    appendAgentMessage("assistant", error.message || "Something went wrong while contacting the AI agent.");
+    appendAgentMessage("assistant", error.message || "Something went wrong while generating the reply.");
     setAgentStatus("AI request failed.");
   } finally {
     setAgentLoading(false);
@@ -1548,13 +1566,13 @@ async function handleAgentSubmit(event) {
 function clearAgentConversation() {
   agentHistory = [];
   agentMessages.innerHTML = "";
-  appendAgentMessage("assistant", "Ask me about margin, PnL, max lot, stop loss, take profit, risk percentage, or how to use this calculator. If your question is missing key information, I will ask for it first.");
+  appendAgentMessage("assistant", "Paste the client query here. The assistant will prepare a plain text reply that can be copied and sent to the client.");
   setAgentStatus("Chat cleared.");
 }
 
 function getAgentTranscript() {
   const lines = [
-    "Trading Calculator AI Agent Chat",
+    "Client Reply Assistant Chat",
     `Exported: ${new Date().toLocaleString()}`,
     `Model selected: ${agentModel.value || "Not selected"}`,
     ""
@@ -1564,7 +1582,7 @@ function getAgentTranscript() {
     lines.push("No chat messages yet.");
   } else {
     agentHistory.forEach((item) => {
-      const speaker = item.role === "assistant" ? "AI Agent" : "Client";
+      const speaker = item.role === "assistant" ? "Suggested Reply" : "Client Query";
       lines.push(`${speaker}:`);
       lines.push(item.content);
       lines.push("");
@@ -1587,7 +1605,7 @@ function downloadBlob(filename, mimeType, content) {
 }
 
 function exportAgentChatText() {
-  downloadBlob("trading-calculator-ai-chat.txt", "text/plain;charset=utf-8", getAgentTranscript());
+  downloadBlob("client-reply-assistant-chat.txt", "text/plain;charset=utf-8", getAgentTranscript());
   setAgentStatus("Chat exported as text.");
 }
 
@@ -1672,7 +1690,7 @@ function createSimplePdf(text) {
 
 function exportAgentChatPdf() {
   const pdf = createSimplePdf(getAgentTranscript());
-  downloadBlob("trading-calculator-ai-chat.pdf", "application/pdf", pdf);
+  downloadBlob("client-reply-assistant-chat.pdf", "application/pdf", pdf);
   setAgentStatus("Chat exported as PDF.");
 }
 
@@ -1758,6 +1776,12 @@ function initializeApp() {
   riskPercentSlPips.addEventListener("input", calculateRiskPercent);
 
   agentForm.addEventListener("submit", handleAgentSubmit);
+  agentQuestion.addEventListener("keydown", (event) => {
+    if (event.ctrlKey && event.key === "Enter") {
+      event.preventDefault();
+      agentForm.requestSubmit();
+    }
+  });
   clearAgentChat.addEventListener("click", clearAgentConversation);
   exportAgentText.addEventListener("click", exportAgentChatText);
   exportAgentPdf.addEventListener("click", exportAgentChatPdf);
