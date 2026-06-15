@@ -63,9 +63,9 @@
 
       <button class="calculator-card" data-tab="agent" type="button">
         <span class="calculator-number">05</span>
-        <span class="calculator-card-title">AI Agent</span>
-        <span class="calculator-card-text">Ask support-style questions about trading calculations, risk, margin, and max lot.</span>
-        <span class="calculator-card-cta">Open AI support</span>
+        <span class="calculator-card-title">Support Reply AI</span>
+        <span class="calculator-card-text">Paste client questions and generate clean client-ready replies.</span>
+        <span class="calculator-card-cta">Open reply assistant</span>
       </button>
     </div>
   </section>
@@ -149,8 +149,8 @@
       </span>
       <span class="tab-step">05</span>
       <span class="tab-text">
-        <span class="tab-label">AI Agent</span>
-        <span class="tab-desc">Support answers and clarifying questions</span>
+        <span class="tab-label">Support Reply AI</span>
+        <span class="tab-desc">Client-ready replies</span>
       </span>
     </button>
   </div>
@@ -733,8 +733,8 @@ Please complete the Risk by Percentage inputs to generate the explanation text.
   <div id="agentSection" class="tool-section tool-agent" style="display:none;">
     <div class="section-heading">
       <div>
-        <div class="section-kicker">AI Support</div>
-        <h2 class="section-title">Trading Calculator AI Agent</h2>
+        <div class="section-kicker">Support Desk</div>
+        <h2 class="section-title">Client Reply Assistant</h2>
       </div>
       <div class="section-chip">
         <span class="chip-icon" aria-hidden="true">
@@ -745,7 +745,7 @@ Please complete the Risk by Percentage inputs to generate the explanation text.
             <path d="M16 9.5H16.01"></path>
           </svg>
         </span>
-        <span>Smart calculator support</span>
+        <span>Client reply assistant</span>
       </div>
     </div>
 
@@ -754,21 +754,16 @@ Please complete the Risk by Percentage inputs to generate the explanation text.
         <div class="agent-model-control">
           <label for="agentModel">AI Model</label>
           <select id="agentModel" data-native-select="true">
-            <option value="gpt-5.4-mini">GPT-5.4 Mini - cheaper, fast</option>
-            <option value="gpt-5.4-nano">GPT-5.4 Nano - cheapest, fastest</option>
-            <option value="gpt-4.1-mini">GPT-4.1 Mini - affordable classic</option>
-            <option value="gpt-4.1-nano">GPT-4.1 Nano - very low cost</option>
-            <option value="gpt-4o-mini">GPT-4o Mini - low cost</option>
-            <option value="gpt-5.4">GPT-5.4 - balanced</option>
-            <option value="gpt-5.5">GPT-5.5 - strongest</option>
-            <option value="gpt-4.1">GPT-4.1 - older flagship</option>
-            <option value="gpt-4o">GPT-4o - older omni model</option>
+            <option value="gpt-4">GPT-4.0 - default</option>
+            <option value="gpt-4.1">GPT-4.1</option>
+            <option value="gpt-4.1-mini">GPT-4.1 Mini</option>
+            <option value="gpt-4.1-nano">GPT-4.1 Nano</option>
           </select>
         </div>
 
         <div class="agent-status-card">
           <span class="agent-status-dot"></span>
-          <span id="agentConnectionStatus">Ready. Cheaper models are selected first by default.</span>
+          <span id="agentConnectionStatus">Ready. Paste the client query and generate a reply.</span>
         </div>
 
         <button id="clearAgentChat" type="button" class="agent-clear-btn">Clear Chat</button>
@@ -779,14 +774,14 @@ Please complete the Risk by Percentage inputs to generate the explanation text.
       <div class="agent-main">
         <div id="agentMessages" class="agent-messages" aria-live="polite">
           <div class="agent-message agent-message-ai">
-            <strong>AI Agent</strong>
-            <p>Ask me about margin, PnL, max lot, stop loss, take profit, risk percentage, or how to use this calculator. If your question is missing key information, I will ask for it first.</p>
+            <strong>Reply Assistant</strong>
+            <p>Paste the client query here. The assistant will prepare a plain text reply that can be copied and sent to the client.</p>
           </div>
         </div>
 
         <form id="agentForm" class="agent-composer">
-          <textarea id="agentQuestion" rows="3" placeholder="Example: I have a $10,000 account and want to risk 1% on XAUUSD. What information do you need?"></textarea>
-          <button id="sendAgentQuestion" type="submit">Ask AI</button>
+          <textarea id="agentQuestion" rows="3" placeholder="Paste the client's question here. Press Ctrl + Enter to generate the reply."></textarea>
+          <button id="sendAgentQuestion" type="submit">Generate Reply</button>
         </form>
       </div>
 
