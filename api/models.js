@@ -1,29 +1,15 @@
 const FALLBACK_MODELS = [
-  { id: "gpt-5.4-mini", label: "GPT-5.4 Mini - cheaper, fast" },
-  { id: "gpt-5.4-nano", label: "GPT-5.4 Nano - cheapest, fastest" },
-  { id: "gpt-4.1-mini", label: "GPT-4.1 Mini - affordable classic" },
-  { id: "gpt-4.1-nano", label: "GPT-4.1 Nano - very low cost" },
-  { id: "gpt-4o-mini", label: "GPT-4o Mini - low cost" },
-  { id: "gpt-5.4", label: "GPT-5.4 - balanced" },
-  { id: "gpt-5.5", label: "GPT-5.5 - strongest" },
-  { id: "gpt-4.1", label: "GPT-4.1 - older flagship" },
-  { id: "gpt-4o", label: "GPT-4o - older omni model" },
-  { id: "gpt-4-turbo", label: "GPT-4 Turbo - legacy" },
-  { id: "gpt-4", label: "GPT-4 - legacy" }
+  { id: "gpt-4", label: "GPT-4.0 - default" },
+  { id: "gpt-4.1", label: "GPT-4.1" },
+  { id: "gpt-4.1-mini", label: "GPT-4.1 Mini" },
+  { id: "gpt-4.1-nano", label: "GPT-4.1 Nano" }
 ];
 
 const PREFERRED_ORDER = [
-  "gpt-5.4-mini",
-  "gpt-5.4-nano",
-  "gpt-4.1-mini",
-  "gpt-4.1-nano",
-  "gpt-4o-mini",
-  "gpt-5.4",
-  "gpt-5.5",
+  "gpt-4",
   "gpt-4.1",
-  "gpt-4o",
-  "gpt-4-turbo",
-  "gpt-4"
+  "gpt-4.1-mini",
+  "gpt-4.1-nano"
 ];
 
 function sendJson(response, statusCode, payload) {
@@ -33,31 +19,15 @@ function sendJson(response, statusCode, payload) {
 }
 
 function describeModel(id) {
-  if (id === "gpt-5.4-nano") return "GPT-5.4 Nano - cheapest, fastest";
-  if (id === "gpt-5.4-mini") return "GPT-5.4 Mini - cheaper, fast";
-  if (id === "gpt-4.1-nano") return "GPT-4.1 Nano - very low cost";
-  if (id === "gpt-4.1-mini") return "GPT-4.1 Mini - affordable classic";
-  if (id === "gpt-4o-mini") return "GPT-4o Mini - low cost";
-  if (id === "gpt-5.4") return "GPT-5.4 - balanced";
-  if (id === "gpt-5.5") return "GPT-5.5 - strongest";
-  if (id === "gpt-4.1") return "GPT-4.1 - older flagship";
-  if (id === "gpt-4o") return "GPT-4o - older omni model";
-  if (id === "gpt-4-turbo") return "GPT-4 Turbo - legacy";
-  if (id === "gpt-4") return "GPT-4 - legacy";
+  if (id === "gpt-4") return "GPT-4.0 - default";
+  if (id === "gpt-4.1") return "GPT-4.1";
+  if (id === "gpt-4.1-mini") return "GPT-4.1 Mini";
+  if (id === "gpt-4.1-nano") return "GPT-4.1 Nano";
   return id;
 }
 
-function isUsefulTextModel(id) {
-  if (!id || typeof id !== "string") return false;
-  if (!id.startsWith("gpt-")) return false;
-  if (id.includes("image")) return false;
-  if (id.includes("audio")) return false;
-  if (id.includes("realtime")) return false;
-  if (id.includes("transcribe")) return false;
-  if (id.includes("tts")) return false;
-  if (id.includes("whisper")) return false;
-  if (id.includes("search")) return false;
-  return true;
+function isAllowedModel(id) {
+  return PREFERRED_ORDER.includes(id);
 }
 
 function sortModels(a, b) {
@@ -81,7 +51,7 @@ module.exports = async function handler(request, response) {
   if (!apiKey) {
     sendJson(response, 200, {
       models: FALLBACK_MODELS,
-      defaultModel: "gpt-5.4-mini",
+      defaultModel: "gpt-4",
       source: "fallback"
     });
     return;
@@ -98,7 +68,7 @@ module.exports = async function handler(request, response) {
     if (!openAiResponse.ok) {
       sendJson(response, 200, {
         models: FALLBACK_MODELS,
-        defaultModel: "gpt-5.4-mini",
+        defaultModel: "gpt-4",
         source: "fallback"
       });
       return;
@@ -106,19 +76,19 @@ module.exports = async function handler(request, response) {
 
     const models = (payload.data || [])
       .map((model) => model.id)
-      .filter(isUsefulTextModel)
+      .filter(isAllowedModel)
       .map((id) => ({ id, label: describeModel(id) }))
       .sort(sortModels);
 
     sendJson(response, 200, {
       models: models.length ? models : FALLBACK_MODELS,
-      defaultModel: models.some((model) => model.id === "gpt-5.4-mini") ? "gpt-5.4-mini" : models[0]?.id || "gpt-5.4-mini",
+      defaultModel: models.some((model) => model.id === "gpt-4") ? "gpt-4" : models[0]?.id || "gpt-4",
       source: models.length ? "openai" : "fallback"
     });
   } catch (error) {
     sendJson(response, 200, {
       models: FALLBACK_MODELS,
-      defaultModel: "gpt-5.4-mini",
+      defaultModel: "gpt-4",
       source: "fallback"
     });
   }
