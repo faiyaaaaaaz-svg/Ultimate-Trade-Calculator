@@ -1327,14 +1327,14 @@ select {
 
 .agent-topbar {
   display: grid;
-  grid-template-columns: minmax(260px, 390px) minmax(220px, 1fr) repeat(3, auto);
-  gap: 14px;
+  grid-template-columns: minmax(240px, 330px) minmax(220px, 1fr) repeat(3, minmax(108px, auto));
+  gap: 12px;
   align-items: stretch;
-  padding: 16px;
-  border-radius: 26px;
+  padding: 14px;
+  border-radius: 24px;
   border: 1px solid rgba(172, 194, 255, 0.16);
   background:
-    radial-gradient(circle at 0% 0%, rgba(49, 212, 255, 0.16), transparent 34%),
+    radial-gradient(circle at 0% 0%, rgba(49, 212, 255, 0.12), transparent 34%),
     linear-gradient(180deg, rgba(16, 28, 56, 0.94), rgba(7, 13, 28, 0.96));
   box-shadow: var(--shadow-lg);
   backdrop-filter: blur(22px);
@@ -1354,8 +1354,8 @@ select {
 }
 
 .agent-model-control select {
-  min-height: 54px;
-  border-radius: 16px;
+  min-height: 52px;
+  border-radius: 14px;
   border-color: rgba(49, 212, 255, 0.38);
   background-color: rgba(3, 8, 19, 0.94);
   box-shadow:
@@ -1364,18 +1364,28 @@ select {
 }
 
 .agent-status-card {
-  min-height: 54px;
+  min-height: 52px;
   display: flex;
   align-items: center;
   gap: 10px;
   align-self: end;
-  padding: 14px 16px;
-  border-radius: 16px;
+  padding: 13px 15px;
+  border-radius: 14px;
   border: 1px solid rgba(172, 194, 255, 0.12);
-  background: rgba(255, 255, 255, 0.035);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.018)),
+    rgba(5, 11, 25, 0.7);
   color: #dce7ff;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 800;
+  min-width: 0;
+}
+
+.agent-status-card span:last-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .agent-status-dot {
@@ -1388,29 +1398,38 @@ select {
 }
 
 .agent-clear-btn {
-  min-height: 54px;
+  min-height: 52px;
   align-self: end;
-  border: 1px solid rgba(172, 194, 255, 0.22);
-  border-radius: 16px;
-  padding: 0 18px;
+  border: 1px solid rgba(172, 194, 255, 0.20);
+  border-radius: 14px;
+  padding: 0 14px;
   color: #ffffff;
   cursor: pointer;
   font-family: var(--body-font);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 900;
   background:
-    linear-gradient(135deg, rgba(109, 124, 255, 0.30), rgba(49, 212, 255, 0.12)),
+    linear-gradient(135deg, rgba(109, 124, 255, 0.22), rgba(49, 212, 255, 0.09)),
     rgba(255,255,255,0.04);
   box-shadow: var(--shadow-sm);
   white-space: nowrap;
+  transition: border-color 0.18s ease, transform 0.18s ease, background 0.18s ease;
+}
+
+.agent-clear-btn:hover {
+  transform: translateY(-1px);
+  border-color: rgba(49, 212, 255, 0.34);
+  background:
+    linear-gradient(135deg, rgba(109, 124, 255, 0.30), rgba(49, 212, 255, 0.14)),
+    rgba(255,255,255,0.05);
 }
 
 .agent-main {
-  border-radius: 30px;
+  border-radius: 26px;
   border: 1px solid rgba(172, 194, 255, 0.16);
   background:
-    radial-gradient(circle at 10% 0%, rgba(49, 212, 255, 0.12), transparent 36%),
-    radial-gradient(circle at 92% 100%, rgba(109, 124, 255, 0.10), transparent 38%),
+    radial-gradient(circle at 10% 0%, rgba(49, 212, 255, 0.10), transparent 36%),
+    radial-gradient(circle at 92% 100%, rgba(109, 124, 255, 0.08), transparent 38%),
     linear-gradient(180deg, rgba(10, 19, 39, 0.96), rgba(5, 10, 23, 0.98));
   box-shadow: var(--shadow-lg);
   backdrop-filter: blur(22px);
@@ -1420,7 +1439,7 @@ select {
 .agent-messages {
   min-height: 520px;
   max-height: 620px;
-  padding: 24px;
+  padding: 22px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -1428,11 +1447,11 @@ select {
 }
 
 .agent-message {
-  max-width: min(760px, 92%);
-  padding: 17px 19px;
-  border-radius: 20px;
-  border: 1px solid rgba(172, 194, 255, 0.13);
-  line-height: 1.7;
+  max-width: min(780px, 94%);
+  padding: 18px 20px;
+  border-radius: 18px;
+  border: 1px solid rgba(172, 194, 255, 0.14);
+  line-height: 1.72;
   box-shadow: var(--shadow-sm);
 }
 
@@ -1456,31 +1475,62 @@ select {
 .agent-message-ai {
   align-self: flex-start;
   background:
-    linear-gradient(135deg, rgba(49, 212, 255, 0.14), rgba(109, 124, 255, 0.08)),
-    rgba(255, 255, 255, 0.025);
+    linear-gradient(145deg, rgba(26, 62, 97, 0.62), rgba(14, 25, 50, 0.84)),
+    rgba(255, 255, 255, 0.026);
+  border-color: rgba(72, 168, 214, 0.22);
 }
 
 .agent-message-user {
   align-self: flex-end;
   background:
-    linear-gradient(135deg, rgba(66, 245, 182, 0.14), rgba(49, 212, 255, 0.06)),
-    rgba(255, 255, 255, 0.025);
+    linear-gradient(145deg, rgba(40, 112, 113, 0.42), rgba(17, 31, 56, 0.82)),
+    rgba(255, 255, 255, 0.024);
+  border-color: rgba(66, 245, 182, 0.18);
+}
+
+.agent-copy-reply {
+  margin-top: 14px;
+  min-height: 38px;
+  border: 1px solid rgba(49, 212, 255, 0.28);
+  border-radius: 12px;
+  padding: 0 14px;
+  color: #e9f7ff;
+  cursor: pointer;
+  font-family: var(--body-font);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  background:
+    linear-gradient(135deg, rgba(49, 212, 255, 0.16), rgba(109, 124, 255, 0.14)),
+    rgba(255,255,255,0.035);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.22);
+  transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease;
+}
+
+.agent-copy-reply:hover {
+  transform: translateY(-1px);
+  border-color: rgba(49, 212, 255, 0.45);
+  background:
+    linear-gradient(135deg, rgba(49, 212, 255, 0.22), rgba(109, 124, 255, 0.18)),
+    rgba(255,255,255,0.04);
 }
 
 .agent-composer {
-  padding: 18px;
+  padding: 16px;
   border-top: 1px solid rgba(172, 194, 255, 0.12);
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 140px;
-  gap: 14px;
-  background: rgba(255,255,255,0.018);
+  grid-template-columns: minmax(0, 1fr) 128px;
+  gap: 12px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.026), rgba(255,255,255,0.012)),
+    rgba(3, 8, 19, 0.42);
 }
 
 .agent-composer textarea {
   width: 100%;
-  min-height: 82px;
+  min-height: 76px;
   resize: vertical;
-  border-radius: 18px;
+  border-radius: 16px;
   border: 1px solid rgba(172, 194, 255, 0.13);
   background:
     linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.018)),
@@ -1499,16 +1549,29 @@ select {
 }
 
 .agent-composer button {
-  min-height: 82px;
-  border: 0;
-  border-radius: 18px;
+  min-height: 76px;
+  border: 1px solid rgba(129, 216, 255, 0.36);
+  border-radius: 16px;
   cursor: pointer;
   color: #ffffff;
   font-family: var(--body-font);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 950;
-  background: linear-gradient(135deg, #31d4ff, #6d7cff);
-  box-shadow: 0 18px 34px rgba(49, 212, 255, 0.18);
+  background:
+    radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.28), transparent 34%),
+    linear-gradient(135deg, #25bff0, #6070ff);
+  box-shadow:
+    0 18px 34px rgba(49, 212, 255, 0.18),
+    inset 0 1px 0 rgba(255,255,255,0.22);
+  transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
+}
+
+.agent-composer button:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+  box-shadow:
+    0 22px 40px rgba(49, 212, 255, 0.24),
+    inset 0 1px 0 rgba(255,255,255,0.24);
 }
 
 .agent-composer button:disabled {
